@@ -12,6 +12,11 @@ A custom component to track medication stock levels, calculate days remaining ba
 * **Low Stock Alerts:** Built-in "Low Stock" binary sensor and blueprint support.
 * **Crash Proof:** Robust error handling and service recovery.
 
+* ## Automations
+This integration comes with a blueprint to easily set up low-stock alerts.
+
+[![Open your Home Assistant instance and show the blueprint import dialog with a specific blueprint URL.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fvemaley%2Fmedication_tracker%2Fblob%2Fmain%2Fblueprints%2Flow_stock_alert.yaml)
+
 ## Installation (HACS)
 1.  Go to HACS -> Integrations.
 2.  Click the 3 dots (top right) -> **Custom repositories**.
@@ -60,6 +65,7 @@ entities:
     service_data:
       # MAKE SURE THIS MATCHES YOUR ENTITY ID
       entity_id: number.metformin_stock
+
 
 
 
