@@ -1,5 +1,7 @@
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=vemaley&repository=medication_tracker&category=integration)
 
+# <img src="icon.png" width="40" height="40"> Medication Stock Tracker for Home Assistant
+
 # Medication Stock Tracker for Home Assistant
 
 A custom component to track medication stock levels, calculate days remaining based on usage, and alert you when you are running low.
@@ -55,4 +57,5 @@ entities:
     service: medication_tracker.take_dose
     service_data:
       entity_id: number.metformin_current_stock
+
 
