@@ -1,0 +1,35 @@
+take_dose:
+  name: Take Dose
+  description: Decrements the stock of a medication by the configured dose amount.
+  fields:
+    entity_id:
+      name: Stock Entity
+      description: The number entity ID (e.g., number.co_codamol_current_stock).
+      example: number.my_medication_stock
+      required: true
+      selector:
+        entity:
+          domain: number
+
+add_stock:
+  name: Add Stock
+  description: Increments the stock of a medication by a specified amount.
+  fields:
+    entity_id:
+      name: Stock Entity
+      description: The number entity ID (e.g., number.co_codamol_current_stock).
+      example: number.my_medication_stock
+      required: true
+      selector:
+        entity:
+          domain: number
+    amount:
+      name: Amount to Add
+      description: The number of tablets to add to the current stock.
+      example: 100
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 1000
+          mode: box

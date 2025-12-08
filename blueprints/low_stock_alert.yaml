@@ -1,0 +1,39 @@
+blueprint:
+  name: Medication Low Stock Alert
+  description: Sends a notification to your phone when a medication stock drops below a set threshold.
+  domain: automation
+  input:
+    medication_sensor:
+      name: Medication Days Remaining Sensor
+      description: The sensor ending in _days_remaining (e.g., sensor.metformin_days_remaining)
+      selector:
+        entity:
+          domain: sensor
+          device_class: duration
+    threshold:
+      name: Days Threshold
+      description: Alert when days remaining falls below this number.
+      default: 7
+      selector:
+        number:
+          min: 1
+          max: 30
+          unit_of_measurement: days
+    notify_device:
+      name: Device to Notify
+      description: The mobile app or notification service to send the alert to.
+      selector:
+        action:
+          domain: notify
+
+trigger:
+  - platform: numeric_state
+    entity_id: !input medication_sensor
+    below: !input threshold
+
+action:
+  - choose: []
+    default: !input notify_device
+    data:
+      title: "?? Medication Low"
+      message: "Warning: {{ state_attr(trigger.entity_id, 'friendly_name') }} is running low. Only {{ states(trigger.entity_id) }} days remaining."
