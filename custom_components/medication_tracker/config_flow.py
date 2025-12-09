@@ -4,7 +4,6 @@ from typing import Any, Dict, Optional
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
-from homeassistant.helpers.selector import NumberSelector, NumberSelectorConfig, NumberSelectorMode
 
 from .const import DOMAIN
 
@@ -106,7 +105,8 @@ class MedicationOptionsFlowHandler(config_entries.OptionsFlow):
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize options flow."""
-        self.config_entry = config_entry
+        # FIXED: Use self._config_entry to avoid conflict with property 'config_entry'
+        self._config_entry = config_entry
 
     async def async_step_init(self, user_input: Dict[str, Any] = None) -> Dict[str, Any]:
         """Manage the options."""
@@ -115,7 +115,8 @@ class MedicationOptionsFlowHandler(config_entries.OptionsFlow):
             return self.async_create_entry(title="", data=user_input)
 
         # Combine data and options to show current values as defaults
-        current_config = {**self.config_entry.data, **self.config_entry.options}
+        # Use self._config_entry here
+        current_config = {**self._config_entry.data, **self._config_entry.options}
 
         # Build schema with current values
         schema = vol.Schema({
