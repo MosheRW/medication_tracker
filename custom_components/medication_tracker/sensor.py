@@ -25,10 +25,9 @@ async def async_setup_entry(
 ) -> None:
     """Set up the Medication Days Remaining sensor entity."""
     try:
-        config = config_entry.data
-        if not config or not config.get("daily_consumption"):
-            return
-
+        # Merge data and options to support dynamic updates
+        config = {**config_entry.data, **config_entry.options}
+        
         base_unique_id = config_entry.entry_id
         number_unique_id = f"{base_unique_id}_stock"
         
@@ -36,9 +35,8 @@ async def async_setup_entry(
             MedicationDaysRemainingSensor(
                 hass,
                 base_unique_id,
-                config["name"],
-                number_unique_id,
                 config,
+                number_unique_id,
             )
         ]
         async_add_entities(entities, True)
@@ -55,14 +53,19 @@ class MedicationDaysRemainingSensor(SensorEntity):
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     
-    def __init__(self, hass: HomeAssistant, base_unique_id: str, name: str, number_unique_id: str, config: Dict[str, Any]):
+    def __init__(self, hass: HomeAssistant, base_unique_id: str, config: Dict[str, Any], number_unique_id: str):
         self.hass = hass
         self._base_unique_id = base_unique_id 
         self._unique_id = f"{base_unique_id}_days_remaining"
-        self._name = name
+        self._name = config.get("name", "Medication")
         self._number_unique_id = number_unique_id 
-        self._daily_consumption = config.get("daily_consumption")
-        self._low_stock_days = config.get("low_stock_days")
+        
+        # Calculate daily consumption (decimals supported)
+        pills_per_dose = float(config.get("pills_per_dose", 1.0))
+        doses_per_day = float(config.get("doses_per_day", 1.0))
+        
+        self._daily_consumption = pills_per_dose * doses_per_day
+        self._low_stock_days = int(config.get("low_stock_days", 7))
         
         self._days_remaining = None
         self._current_stock = None
@@ -117,14 +120,12 @@ class MedicationDaysRemainingSensor(SensorEntity):
             "number", DOMAIN, self._number_unique_id
         )
 
-        # FIXED: Retry limit to prevent log spam
         if not number_entity_id:
             self._retry_count += 1
             if self._retry_count > 10:
                 _LOGGER.debug(f"Stop retrying to link {self._name} after 10 attempts. Entity not ready.")
                 return
 
-            # Retry in 5 seconds
             self._remove_listener = async_call_later(self.hass, 5.0, self._setup_stock_listener)
             return
 
