@@ -1,23 +1,40 @@
 import logging
 from typing import Any, Dict, Optional
 
-# --- New Import: Voluptuous for schemas ---
-import voluptuous as vol 
-# --- Removed: from homeassistant.helpers import selector ---
-
+import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
+from homeassistant.helpers.selector import NumberSelector, NumberSelectorConfig, NumberSelectorMode
+
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-# --- Step 1: Basic Information ---
+# Common schemas
+def get_dosage_schema(defaults: Dict[str, Any] = None) -> vol.Schema:
+    defaults = defaults or {}
+    return vol.Schema({
+        vol.Required("pills_per_dose", default=defaults.get("pills_per_dose", 1.0)): vol.Coerce(float),
+        vol.Required("doses_per_day", default=defaults.get("doses_per_day", 1.0)): vol.Coerce(float),
+    })
+
+def get_threshold_schema(defaults: Dict[str, Any] = None) -> vol.Schema:
+    defaults = defaults or {}
+    return vol.Schema({
+        vol.Optional("low_stock_days", default=defaults.get("low_stock_days", 7)): int,
+    })
+
 class MedicationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Medication Tracker."""
 
     VERSION = 1
     
-    # Store the data across steps
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry):
+        """Get the options flow for this handler."""
+        return MedicationOptionsFlowHandler(config_entry)
+
     data: Dict[str, Any] = {}
 
     async def async_step_user(self, user_input: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -26,89 +43,90 @@ class MedicationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self.data.update(user_input)
             return await self.async_step_dosage()
 
-        # --- USING VOLUPTUOUS SCHEMA ---
         DATA_SCHEMA = vol.Schema(
             {
                 vol.Required("name"): str,
-                # Use int for number fields
-                vol.Required("initial_stock", description="Starting number of tablets"): int,
+                vol.Required("initial_stock", description="Starting number of tablets"): vol.Coerce(float),
             }
         )
         return self.async_show_form(
             step_id="user",
             data_schema=DATA_SCHEMA,
             errors={},
-            # FIX: Removed 'description' argument which caused the crash
             description_placeholders={
                 "info": "Enter the name of the medication and your starting tablet count."
             }
         )
 
-    # --- Step 2: Dosage and Frequency (Updated to use voluptuous) ---
     async def async_step_dosage(self, user_input: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Handle the dosage step."""
         if user_input is not None:
             self.data.update(user_input)
             return await self.async_step_threshold()
 
-        DOSAGE_SCHEMA = vol.Schema(
-            {
-                vol.Required("pills_per_dose"): int,
-                vol.Required("doses_per_day"): int,
-            }
-        )
         return self.async_show_form(
             step_id="dosage",
-            data_schema=DOSAGE_SCHEMA,
+            data_schema=get_dosage_schema(),
             errors={},
-            # FIX: Removed 'description' argument which caused the crash
             description_placeholders={
-                "info": "Enter the dosage details."
+                "info": "Enter the dosage details (decimals allowed)."
             }
         )
 
-    # --- Step 3: Low Stock Threshold (Updated to use voluptuous) ---
     async def async_step_threshold(self, user_input: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Handle the threshold step."""
         if user_input is not None:
             self.data.update(user_input)
             
-            # Calculate the daily consumption based on user input (12 spaces)
+            # Calculate daily consumption for initial setup (informational log only, entity calculates dynamically)
             daily_consumption = self.data["pills_per_dose"] * self.data["doses_per_day"]
             self.data["daily_consumption"] = daily_consumption 
             
-            # Set a default initial threshold if the user didn't enter one (12 spaces)
             if "low_stock_days" not in self.data:
-                # Indentation: 16 spaces
                 self.data["low_stock_days"] = 7
             
             _LOGGER.info(f"Medication Configured: {self.data['name']} - Daily Use: {daily_consumption} tablets.")
 
-            # Create the configuration entry in Home Assistant (12 spaces)
             return self.async_create_entry(
                 title=self.data["name"], 
                 data=self.data
             )
 
-        THRESHOLD_SCHEMA = vol.Schema(
-            {
-                # Provide a default value for optional field
-                vol.Optional("low_stock_days", default=7): int,
-            }
-        )
-
         return self.async_show_form(
             step_id="threshold",
-            data_schema=THRESHOLD_SCHEMA,
+            data_schema=get_threshold_schema(),
             errors={},
-            # FIX: Removed 'description' argument which caused the crash
             description_placeholders={
                 "info": "Set the low stock alert level (in days of supply)."
             }
         )
 
-    @staticmethod
-    @callback
-    def async_remove_unload_listeners(unload_ok: bool) -> None:
-        """Unload listeners when an entry is removed."""
-        pass
+class MedicationOptionsFlowHandler(config_entries.OptionsFlow):
+    """Handle Medication Tracker options."""
+
+    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
+        """Initialize options flow."""
+        self.config_entry = config_entry
+
+    async def async_step_init(self, user_input: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Manage the options."""
+        if user_input is not None:
+            # Update entry options
+            return self.async_create_entry(title="", data=user_input)
+
+        # Combine data and options to show current values as defaults
+        current_config = {**self.config_entry.data, **self.config_entry.options}
+
+        # Build schema with current values
+        schema = vol.Schema({
+            **get_dosage_schema(current_config).schema,
+            **get_threshold_schema(current_config).schema,
+        })
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=schema,
+            description_placeholders={
+                "info": "Update dosage and alert settings."
+            }
+        )
