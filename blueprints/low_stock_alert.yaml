@@ -21,10 +21,10 @@ blueprint:
           unit_of_measurement: days
     notify_device:
       name: Device to Notify
-      description: The mobile app or notification service to send the alert to.
+      description: Select the mobile phone to receive the notification.
       selector:
-        action:
-          domain: notify
+        device:
+          integration: mobile_app
 
 trigger:
   - platform: numeric_state
@@ -32,8 +32,8 @@ trigger:
     below: !input threshold
 
 action:
-  - choose: []
-    default: !input notify_device
-    data:
-      title: "💊 Medication Low"
-      message: "Warning: {{ state_attr(trigger.entity_id, 'friendly_name') }} is running low. Only {{ states(trigger.entity_id) }} days remaining."
+  - domain: mobile_app
+    type: notify
+    device_id: !input notify_device
+    title: "💊 Medication Low"
+    message: "Warning: {{ state_attr(trigger.entity_id, 'friendly_name') }} is running low. Only {{ states(trigger.entity_id) }} days remaining."
