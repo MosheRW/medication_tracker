@@ -1,6 +1,6 @@
 take_dose:
   name: Take Dose
-  description: Decrements the stock of a medication by the configured dose amount.
+  description: Decrements the stock of a medication by the configured dose amount and records the time.
   fields:
     entity_id:
       name: Stock Entity
@@ -30,6 +30,7 @@ add_stock:
       required: true
       selector:
         number:
-          min: 1
+          min: 0.1
           max: 1000
+          step: 0.01
           mode: box
