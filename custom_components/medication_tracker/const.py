@@ -1,7 +1,7 @@
 """Constants for Medication Stock Tracker."""
 
 DOMAIN = "medication_tracker"
-PLATFORMS = ["number", "sensor"]
+PLATFORMS = ["number", "sensor", "button"]
 
 # Services
 SERVICE_TAKE_DOSE = "take_dose"
