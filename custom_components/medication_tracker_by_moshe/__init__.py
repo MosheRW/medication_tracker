@@ -9,7 +9,7 @@ from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.helpers import discovery
 
 # Define domain and constants
-DOMAIN = "medication_tracker"
+DOMAIN = "medication_tracker_by_moshe"
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = ["number", "sensor"]

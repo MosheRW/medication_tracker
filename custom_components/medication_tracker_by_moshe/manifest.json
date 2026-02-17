@@ -1,0 +1,9 @@
+{
+  "domain": "medication_tracker_by_moshe",
+  "name": "Medication Stock Tracker",
+  "version": "1.1.0",
+  "config_flow": true,
+  "documentation": "https://github.com/mosheRW/medication_tracker",
+  "codeowners": ["@vemaley", "@mosheRW"],
+  "dependencies": []
+}
