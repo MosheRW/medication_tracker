@@ -62,6 +62,7 @@ class MedicationStockNumber(NumberEntity, RestoreEntity):
 
         self._current_stock = self._initial_stock
         self._last_taken: Optional[datetime.datetime] = None
+        self._doses_taken_today = 0
 
         self._attr_name = "Current Stock"
         self._attr_mode = NumberMode.BOX
@@ -99,7 +100,14 @@ class MedicationStockNumber(NumberEntity, RestoreEntity):
         }
         if self._last_taken:
             attrs["last_taken"] = self._last_taken.isoformat()
+        attrs["doses_taken_today"] = self._doses_taken_today
         return attrs
+
+    @property
+    def doses_taken_today(self) -> int:
+        if not (self._last_taken and self._last_taken.date() == dt_util.now().date()):
+            self._doses_taken_today = 0
+        return self._doses_taken_today
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
@@ -141,9 +149,9 @@ class MedicationStockNumber(NumberEntity, RestoreEntity):
                 f"{self._medication_name}: Dose already taken recently. Ignoring duplicate.")
             return
 
-        if self._last_taken and self._last_taken.date() == dt_util.today().date():
-            _LOGGER.error(
-                f"{self._medication_name}: Dose already taken today. Ignoring duplicate.")
+        if self.doses_taken_today >= self._doses_per_day:
+            _LOGGER.warning(
+                f"{self._medication_name}: Maximum doses taken today. Cannot take more.")
             return
 
         dose = self._pills_per_dose
