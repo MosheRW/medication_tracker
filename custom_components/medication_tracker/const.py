@@ -1,6 +1,6 @@
 """Constants for Medication Stock Tracker."""
 
-DOMAIN = "medication_tracker"
+DOMAIN = "medication_tracker_by_moshe"
 PLATFORMS = ["number", "sensor", "button"]
 
 # Services
