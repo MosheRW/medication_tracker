@@ -97,10 +97,10 @@ class MedicationStockNumber(NumberEntity, RestoreEntity):
             "daily_consumption": self._daily_consumption,
             "low_stock_days": self._low_stock_days,
             "medication_name": self._medication_name,
+            "doses_taken_today": self._doses_taken_today
         }
         if self._last_taken:
             attrs["last_taken"] = self._last_taken.isoformat()
-        attrs["doses_taken_today"] = self._doses_taken_today
         return attrs
 
     @property
